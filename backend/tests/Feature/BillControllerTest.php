@@ -67,7 +67,8 @@ class BillControllerTest extends TestCase
             'effective_from' => '2024-01-01',
             'effective_to'   => null,
         ]);
-        Unit::factory()->occupied()->count(3)->create();
+        Unit::factory()->occupied()->count(2)->create();
+        Unit::factory()->create(['status' => 'vacant']); // 空置房間也要收費
         $this->actingAsAdmin();
 
         $response = $this->postJson('/api/bills/generate', [
@@ -119,7 +120,7 @@ class BillControllerTest extends TestCase
         $response->assertUnprocessable();
     }
 
-    public function test_generate_bills_skips_vacant_units(): void
+    public function test_generate_bills_includes_vacant_units(): void
     {
         FeeRule::factory()->create(['effective_from' => '2024-01-01']);
         Unit::factory()->create(['status' => 'vacant']);
@@ -127,7 +128,8 @@ class BillControllerTest extends TestCase
 
         $response = $this->postJson('/api/bills/generate', ['year' => 2025, 'month' => 6]);
 
-        $response->assertOk()->assertJsonPath('created', 0);
+        $response->assertOk()->assertJsonPath('created', 1);
+        $this->assertDatabaseCount('bills', 1);
     }
 
     public function test_can_update_bill_note(): void
