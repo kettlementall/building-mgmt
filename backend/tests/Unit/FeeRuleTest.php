@@ -100,4 +100,44 @@ class FeeRuleTest extends TestCase
 
         $this->assertNotNull($rule);
     }
+
+    public function test_fee_rule_has_many_bills(): void
+    {
+        $rule = FeeRule::factory()->create();
+        $unit = \App\Models\Unit::factory()->occupied()->create();
+
+        \App\Models\Bill::factory()->count(2)->create([
+            'fee_rule_id' => $rule->id,
+            'unit_id'     => $unit->id,
+        ]);
+
+        $this->assertCount(2, $rule->fresh()->bills);
+    }
+
+    public function test_fee_rule_amount_is_cast_to_decimal(): void
+    {
+        $rule = FeeRule::factory()->create(['amount' => 3000]);
+
+        $this->assertEquals('3000.00', $rule->amount);
+    }
+
+    public function test_fee_rule_dates_are_cast_to_date(): void
+    {
+        $rule = FeeRule::factory()->create([
+            'effective_from' => '2024-01-01',
+            'effective_to'   => '2024-12-31',
+        ]);
+
+        $this->assertInstanceOf(\Illuminate\Support\Carbon::class, $rule->effective_from);
+        $this->assertInstanceOf(\Illuminate\Support\Carbon::class, $rule->effective_to);
+        $this->assertEquals('2024-01-01', $rule->effective_from->format('Y-m-d'));
+        $this->assertEquals('2024-12-31', $rule->effective_to->format('Y-m-d'));
+    }
+
+    public function test_fee_rule_effective_to_null_is_allowed(): void
+    {
+        $rule = FeeRule::factory()->create(['effective_to' => null]);
+
+        $this->assertNull($rule->effective_to);
+    }
 }

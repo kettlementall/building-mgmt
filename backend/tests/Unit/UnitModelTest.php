@@ -55,4 +55,22 @@ class UnitModelTest extends TestCase
 
         $this->assertCount(3, $unit->fresh()->bills);
     }
+
+    public function test_unit_soft_delete_hides_from_default_query(): void
+    {
+        $unit = Unit::factory()->create();
+        $id   = $unit->id;
+
+        $unit->delete();
+
+        $this->assertNull(Unit::find($id));
+        $this->assertNotNull(Unit::withTrashed()->find($id));
+    }
+
+    public function test_unit_area_is_cast_to_decimal(): void
+    {
+        $unit = Unit::factory()->create(['area' => 55]);
+
+        $this->assertEquals('55.00', $unit->area);
+    }
 }

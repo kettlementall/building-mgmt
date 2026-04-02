@@ -68,4 +68,24 @@ class PaymentTest extends TestCase
 
         $this->assertInstanceOf(\Illuminate\Support\Carbon::class, $payment->paid_at);
     }
+
+    public function test_payment_belongs_to_recorder(): void
+    {
+        $user    = User::factory()->create();
+        $payment = Payment::factory()->create(['recorded_by' => $user->id]);
+
+        $this->assertNotNull($payment->recorder);
+        $this->assertEquals($user->id, $payment->recorder->id);
+    }
+
+    public function test_payment_method_transfer_sets_reference(): void
+    {
+        $payment = Payment::factory()->transfer()->create([
+            'recorded_by' => User::factory()->create()->id,
+        ]);
+
+        $this->assertEquals('transfer', $payment->method);
+        $this->assertNotNull($payment->reference);
+        $this->assertStringStartsWith('TXN', $payment->reference);
+    }
 }

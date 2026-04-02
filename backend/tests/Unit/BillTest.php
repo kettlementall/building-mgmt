@@ -59,4 +59,16 @@ class BillTest extends TestCase
         $this->assertInstanceOf(\Illuminate\Support\Carbon::class, $bill->due_date);
         $this->assertEquals('2025-06-15', $bill->due_date->format('Y-m-d'));
     }
+
+    public function test_bill_has_one_payment(): void
+    {
+        $bill    = Bill::factory()->create();
+        $payment = \App\Models\Payment::factory()->create([
+            'bill_id'     => $bill->id,
+            'recorded_by' => \App\Models\User::factory()->create()->id,
+        ]);
+
+        $this->assertNotNull($bill->fresh()->payment);
+        $this->assertEquals($payment->id, $bill->fresh()->payment->id);
+    }
 }

@@ -1,0 +1,54 @@
+name: Unit Tests
+
+on:
+  push:
+    paths:
+      - 'backend/**'
+      - '.github/workflows/unit-tests.yml'
+  pull_request:
+    paths:
+      - 'backend/**'
+      - '.github/workflows/unit-tests.yml'
+
+jobs:
+  unit-tests:
+    name: PHP ${{ matrix.php }} — Unit Tests
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        php: ['8.3']
+
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: pdo, pdo_sqlite, sqlite3, mbstring, xml, ctype, json, bcmath
+          coverage: none
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: backend/vendor
+          key: composer-${{ matrix.php }}-${{ hashFiles('backend/composer.lock') }}
+          restore-keys: composer-${{ matrix.php }}-
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Copy .env
+        run: cp .env.example .env
+
+      - name: Generate app key
+        run: php artisan key:generate
+
+      - name: Run Unit Tests
+        run: php artisan test --testsuite=Unit
