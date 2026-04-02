@@ -9,7 +9,8 @@ on:
     paths:
       - 'backend/**'
       - '.github/workflows/unit-tests.yml'
-
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 jobs:
   unit-tests:
     name: PHP ${{ matrix.php }} — Unit Tests
