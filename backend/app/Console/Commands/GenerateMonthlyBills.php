@@ -28,7 +28,7 @@ class GenerateMonthlyBills extends Command
         }
 
         $dueDate = Carbon::create($year, $month, 15)->format('Y-m-d');
-        $units   = Unit::where('status', 'occupied')->get();
+        $units   = Unit::all();
         $created = 0;
 
         foreach ($units as $unit) {

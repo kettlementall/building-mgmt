@@ -58,7 +58,7 @@ class BillController extends Controller
             return response()->json(['message' => '該月份無有效管理費規則'], 422);
         }
 
-        $units   = Unit::where('status', 'occupied')->get();
+        $units   = Unit::all();
         $created = 0;
         $skipped = 0;
 
