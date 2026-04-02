@@ -1,0 +1,74 @@
+services:
+  nginx:
+    image: nginx:alpine
+    container_name: building_nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./backend:/var/www/backend
+      - ./frontend/dist:/var/www/frontend
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - php
+    networks:
+      - building_net
+
+  php:
+    build:
+      context: ./docker/php
+      dockerfile: Dockerfile
+    container_name: building_php
+    volumes:
+      - ./backend:/var/www/backend
+    environment:
+      - APP_ENV=local
+    depends_on:
+      - mysql
+      - redis
+    networks:
+      - building_net
+
+  mysql:
+    image: mysql:8.0
+    container_name: building_mysql
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: building_mgmt
+      MYSQL_USER: building
+      MYSQL_PASSWORD: building
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - building_net
+
+  redis:
+    image: redis:alpine
+    container_name: building_redis
+    ports:
+      - "6379:6379"
+    networks:
+      - building_net
+
+  # 僅開發時使用，production 改用 nginx 提供 dist 靜態檔案
+  node:
+    image: node:20-alpine
+    container_name: building_node
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+    ports:
+      - "5173:5173"
+    command: sh -c "npm install && npm run dev -- --host"
+    networks:
+      - building_net
+    profiles:
+      - dev
+
+volumes:
+  mysql_data:
+
+networks:
+  building_net:
+    driver: bridge
